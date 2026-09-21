@@ -1,0 +1,64 @@
+name: paper-trade
+
+on:
+  schedule:
+    # Every 15 minutes. GitHub's scheduler can run late under load (commonly
+    # 5-20 min), so a bar is sometimes acted on later than ideal. Each trade
+    # records signal price vs actual fill, so that cost is measured, not hidden.
+    - cron: "*/15 * * * *"
+  workflow_dispatch:        # lets you trigger a run by hand
+
+# Runs must not overlap: two cycles writing paper.db at once would corrupt
+# state or double-open positions. Queue them instead of running in parallel.
+concurrency:
+  group: paper-trade
+  cancel-in-progress: false
+
+permissions:
+  contents: write           # needed to commit the trade log back
+
+jobs:
+  cycle:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Verify engine still matches the backtest
+        # If the live engine ever stops reproducing the validated backtest,
+        # the paper results stop meaning anything. Fail the run rather than
+        # quietly trade with a changed engine.
+        run: python -m paper_live.verify_parity
+
+      - name: Run one trading cycle
+        env:
+          TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
+          TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
+        run: python -m paper_live.run --once
+
+      - name: Commit updated state
+        run: |
+          git config user.name  "paper-bot"
+          git config user.email "paper-bot@users.noreply.github.com"
+          git add -f paper_live/paper.db paper_live/paper.log 2>/dev/null || true
+          if git diff --cached --quiet; then
+            echo "no state change this cycle"
+            exit 0
+          fi
+          git commit -m "state: $(date -u '+%Y-%m-%d %H:%M UTC')"
+          # Another queued run may have pushed while we worked.
+          for i in 1 2 3; do
+            git pull --rebase --autostash origin main && git push origin HEAD:main && exit 0
+            echo "push attempt $i failed, retrying"
+            sleep 5
+          done
+          echo "could not push state after 3 attempts" >&2
+          exit 1

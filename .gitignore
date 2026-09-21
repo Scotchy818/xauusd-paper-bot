@@ -1,0 +1,14 @@
+# Never commit credentials. Telegram token and chat id come from GitHub
+# Secrets as environment variables, never from a file in this repo.
+.env
+.env.*
+*.pem
+*.key
+
+__pycache__/
+*.pyc
+.venv/
+.DS_Store
+
+# the throwaway db used by the smoke test
+paper_live/_smoke.db
