@@ -101,10 +101,13 @@ def closed_since(df: pd.DataFrame, tf: str, last_seen: str | None) -> list:
     """
     if df is None or df.empty:
         return []
+    from paper_live import config as _C
     minutes = INTERVALS[tf][1]
     now = pd.Timestamp(datetime.now(timezone.utc)).tz_localize(None)
+    # Require the bar to be closed AND settled (see config.SETTLE_SECONDS).
+    cutoff = now - pd.Timedelta(seconds=getattr(_C, "SETTLE_SECONDS", 0))
 
-    closed = df[pd.to_datetime(df["dt"]) + pd.Timedelta(minutes=minutes) <= now]
+    closed = df[pd.to_datetime(df["dt"]) + pd.Timedelta(minutes=minutes) <= cutoff]
     if closed.empty:
         return []
     if last_seen:

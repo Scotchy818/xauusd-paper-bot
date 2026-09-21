@@ -62,6 +62,13 @@ COST = 0.00020
 # feed latency measured above.
 POLL_SECONDS = 60
 
+# Wait this long after a bar's close before acting on it, to let the feed
+# finalise. A spot check found a 15m bar already final 14s after close, but
+# one sample does not prove it always is — and acting on a provisional high
+# or low would trigger stops at prices that never really traded. 30s is well
+# inside the 60s poll interval, so it costs no meaningful responsiveness.
+SETTLE_SECONDS = 30
+
 # Most bars a single cycle will replay. A cold start (no database) or a long
 # outage must NOT replay the entire fetched history: that would open trades on
 # ancient bars and, before this cap existed, made the first run hang for

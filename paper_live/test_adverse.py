@@ -221,6 +221,25 @@ def test_catchup_cap():
     return ok
 
 
+def test_settle_delay():
+    """A bar must not be actionable until SETTLE_SECONDS after its close."""
+    import datetime as _dt
+    now = pd.Timestamp(_dt.datetime.now(_dt.timezone.utc)).tz_localize(None)
+    # a 15m bar that closed 5 seconds ago — too fresh to trust
+    fresh = now - pd.Timedelta(minutes=15) + pd.Timedelta(seconds=5)
+    # one that closed comfortably beyond the settle window
+    settled = now - pd.Timedelta(minutes=15) - pd.Timedelta(
+        seconds=C.SETTLE_SECONDS + 30)
+    df = pd.DataFrame({"dt": [settled, fresh], "o": [1, 1], "h": [1, 1],
+                       "l": [1, 1], "c": [1, 1], "v": [1, 1]})
+    got = feed.closed_since(df, "15m", None)
+    ok = len(got) == 1 and pd.Timestamp(got[0]["dt"]) == settled
+    results.append(("SETTLE DELAY (provisional bar not actioned)",
+                    PASS if ok else FAIL,
+                    f"{len(got)} of 2 bars actionable (expected 1)"))
+    return ok
+
+
 def test_feed_outage():
     """closed_since must return nothing (not crash, not skip) on bad input."""
     ok = True
@@ -250,6 +269,7 @@ def main() -> int:
     test_idempotence(df, sigs, specs)
     test_cold_start()
     test_catchup_cap()
+    test_settle_delay()
     test_feed_outage()
 
     print("=" * 84)
