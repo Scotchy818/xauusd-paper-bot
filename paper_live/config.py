@@ -62,6 +62,12 @@ COST = 0.00020
 # feed latency measured above.
 POLL_SECONDS = 60
 
+# Most bars a single cycle will replay. A cold start (no database) or a long
+# outage must NOT replay the entire fetched history: that would open trades on
+# ancient bars and, before this cap existed, made the first run hang for
+# minutes doing a network call per entry.
+MAX_CATCHUP_BARS = 50
+
 # Bars of history kept for signal computation. Must comfortably exceed the
 # longest lookback any strategy uses (premium/discount uses 100).
 HISTORY_BARS = 1000

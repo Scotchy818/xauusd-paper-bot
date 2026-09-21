@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS positions (
     half_banked  INTEGER NOT NULL DEFAULT 0,
     banked_ret   REAL NOT NULL DEFAULT 0,
     bars_held    INTEGER NOT NULL DEFAULT 0,
+    bars_late    INTEGER NOT NULL DEFAULT 0,
     stop_pct     REAL NOT NULL,
     trail_k      REAL NOT NULL,
     style        TEXT NOT NULL
@@ -53,6 +54,7 @@ CREATE TABLE IF NOT EXISTS trades (
     entry_price  REAL NOT NULL,
     exit_price   REAL NOT NULL,
     slippage_bp  REAL NOT NULL,
+    bars_late    INTEGER NOT NULL DEFAULT 0,
     bars_held    INTEGER NOT NULL,
     exit_reason  TEXT NOT NULL,
     gross_ret    REAL NOT NULL,

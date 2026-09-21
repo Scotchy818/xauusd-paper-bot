@@ -57,10 +57,12 @@ def send(text: str, logger=None) -> bool:
         return False
 
 
-def fmt_open(name, direction, price, signal_price, stop, size, equity) -> str:
+def fmt_open(name, direction, price, signal_price, stop, size, equity,
+             bars_late=0) -> str:
     side = "LONG" if direction > 0 else "SHORT"
     slip = (price - signal_price) / signal_price * 10000 * (1 if direction > 0 else -1)
-    return (f"🟢 <b>OPEN {side}</b>  {name}\n"
+    late = f"  ⏰{bars_late} bars late" if bars_late else ""
+    return (f"🟢 <b>OPEN {side}</b>  {name}{late}\n"
             f"entry <b>{price:.2f}</b>  (signal {signal_price:.2f}, "
             f"slip {slip:+.1f}bp)\n"
             f"stop {stop:.2f}   size {size:,.0f}\n"

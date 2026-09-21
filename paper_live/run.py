@@ -56,107 +56,168 @@ def setup_log():
 log = setup_log()
 
 
-def signal_for(family: str, df: pd.DataFrame) -> int:
-    """Signal on the last row of df. Same computation as the backtest."""
+def signal_series(family: str, df: pd.DataFrame):
+    """
+    Signals for EVERY bar in df, computed exactly as the backtest does.
+
+    Returning the whole series (rather than just the last value) is what lets
+    a late cycle replay missed bars with each bar's OWN signal. Reading only
+    the newest row would apply the current signal to an older bar.
+    """
     fn = FAMILIES.get(family)
     if fn is None:
-        return 0
+        return None
     try:
-        s = fn(df).fillna(0).astype(int)
-        return int(s.iloc[-1])
+        return fn(df).fillna(0).astype(int)
     except Exception as e:
         log.warning("signal %s failed: %s", family, e)
-        return 0
+        return None
 
 
 def cycle(store: Store, state: dict) -> None:
-    equity = store.equity(C.START_EQUITY)
-    positions = {k: Position.from_row(v) for k, v in store.open_positions().items()}
-
     for tf in C.TIMEFRAMES:
         try:
             df = feed.fetch_recent(C.SYMBOL, tf, C.HISTORY_BARS)
         except Exception as e:
             log.warning("feed %s failed: %s", tf, e)
             continue
-        bar = feed.latest_closed(df, tf)
-        if bar is None:
-            continue
 
         bar_key = f"last_bar_{tf}"
         seen = state.get(bar_key) or store.get_meta(bar_key)
-        bar_time = str(bar["dt"])
-        if seen == bar_time:
-            continue                      # nothing new on this timeframe
-        state[bar_key] = bar_time
-        store.set_meta(bar_key, bar_time)
-        log.info("new %s bar %s  o=%.2f h=%.2f l=%.2f c=%.2f",
-                 tf, bar_time, bar["o"], bar["h"], bar["l"], bar["c"])
+        pending = feed.closed_since(df, tf, seen)
+        if not pending:
+            continue
+
+        if seen is None:
+            # Cold start: adopt the newest closed bar without replaying
+            # history. There are no open positions to manage across those
+            # bars, and opening trades on stale ones would be fiction.
+            newest = pending[-1]
+            state[bar_key] = str(newest["dt"])
+            store.set_meta(bar_key, str(newest["dt"]))
+            log.info("cold start on %s — adopting bar %s, not replaying %d bars",
+                     tf, str(newest["dt"]), len(pending) - 1)
+            continue
+
+        if len(pending) > C.MAX_CATCHUP_BARS:
+            log.warning("%s is %d bars behind; replaying only the last %d "
+                        "(long outage or lost state)",
+                        tf, len(pending), C.MAX_CATCHUP_BARS)
+            pending = pending[-C.MAX_CATCHUP_BARS:]
+        if len(pending) > 1:
+            log.info("catching up %d %s bars — scheduler ran late", len(pending), tf)
+
+        # One price per cycle. All entries in a cycle happen at the same
+        # wall-clock moment, so fetching per entry is both wrong and slow.
+        fill_now = feed.spot(C.SYMBOL)
 
         specs = [s for s in C.STRATEGIES if s[1] == tf]
-        # A strategy that exits on this bar may NOT re-enter on the same bar.
-        # The backtest enforced this (`if i <= last_exit: continue`) because
-        # neither it nor we can know whether the exit happened before or after
-        # the signal within the bar. Allowing same-bar re-entry made the live
-        # engine produce ~10% more trades than the backtest it is meant to
-        # reproduce.
-        closed_this_bar: set[str] = set()
 
-        # ---- 1. advance open positions through this bar ----------------
-        for (name, _tf, fam, style, stop, rr, tk) in specs:
-            pos = positions.get(name)
-            if pos is None:
-                continue
-            reason, px, gross = update(pos, float(bar["h"]), float(bar["l"]),
-                                       C.MAX_HOLD_BARS)
-            if reason is None:
-                store.upsert_position(pos.to_row())
-                continue
+        # Signals for the WHOLE frame, once. When replaying a missed bar we
+        # need that bar's signal, not the newest one — reading the last row
+        # would apply today's signal to an older bar.
+        sigs = {}
+        for (_n, _t, fam, _s, _st, _r, _k) in specs:
+            if fam not in sigs:
+                sigs[fam] = signal_series(fam, df)
+        index_of = {str(d): i for i, d in enumerate(df["dt"])}
 
-            net = gross - C.COST
-            pnl = net * pos.size
-            equity += pnl
-            slip = ((pos.entry_price - pos.signal_price) / pos.signal_price
-                    * 10000 * pos.direction)
-            store.record_trade({
-                "strategy": name, "direction": pos.direction,
-                "entry_time": pos.entry_time, "exit_time": bar_time,
-                "signal_price": pos.signal_price, "entry_price": pos.entry_price,
-                "exit_price": float(px), "slippage_bp": float(slip),
-                "bars_held": pos.bars_held, "exit_reason": reason,
-                "gross_ret": float(gross), "net_ret": float(net),
-                "pnl": float(pnl), "equity_after": float(equity),
-            })
-            store.delete_position(name)
-            positions.pop(name, None)
-            closed_this_bar.add(name)
-            log.info("CLOSE %s %s @%.2f  %s  net %+.3f%%  pnl %+.2f  eq %.2f",
-                     name, "LONG" if pos.direction > 0 else "SHORT", px,
-                     reason, net * 100, pnl, equity)
-            notify.send(notify.fmt_close(
-                name, pos.direction, pos.entry_price, float(px), reason,
-                net, pnl, equity, pos.bars_held), log)
+        # Replay every missed bar in order. Skipping them would leave open
+        # positions unmanaged across the gap, so a stop that should have
+        # fired goes unhonoured.
+        for k, bar in enumerate(pending):
+            bars_late = len(pending) - 1 - k      # 0 == newest bar
+            i = index_of.get(str(bar["dt"]))
+            process_bar(store, tf, bar, specs, sigs, i, bars_late, log,
+                        fill_now)
+            state[bar_key] = str(bar["dt"])
+            store.set_meta(bar_key, str(bar["dt"]))
 
-        # ---- 2. look for new entries ------------------------------------
-        for (name, _tf, fam, style, stop, rr, tk) in specs:
-            if name in positions or name in closed_this_bar:
-                continue                  # one position per strategy, and no
-                                          # re-entry on the bar it just exited
-            d = signal_for(fam, df)
-            if d == 0:
-                continue
-            fill = feed.spot(C.SYMBOL) or float(bar["c"])
-            pos = open_position(name, d, bar_time, float(bar["c"]), fill,
-                                equity, C.RISK_PCT, stop, rr, tk, style)
-            positions[name] = pos
+
+def process_bar(store, tf, bar, specs, sigs, idx, bars_late, log,
+                fill_now=None):
+    """Advance open positions through one bar, then look for entries on it."""
+    equity = store.equity(C.START_EQUITY)
+    positions = {k: Position.from_row(v) for k, v in store.open_positions().items()}
+    bar_time = str(bar["dt"])
+    if bars_late == 0:
+        log.info("new %s bar %s  o=%.2f h=%.2f l=%.2f c=%.2f",
+                 tf, bar_time, bar["o"], bar["h"], bar["l"], bar["c"])
+    else:
+        log.info("replay %s bar %s (%d bars late)  h=%.2f l=%.2f",
+                 tf, bar_time, bars_late, bar["h"], bar["l"])
+
+    # A strategy that exits on this bar may NOT re-enter on the same bar.
+    # The backtest enforced this (`if i <= last_exit: continue`) because
+    # neither it nor we can know the intra-bar ordering of exit and signal.
+    # Allowing same-bar re-entry produced ~10% more trades than the
+    # backtest this is meant to reproduce.
+    closed_this_bar: set[str] = set()
+
+    # ---- 1. advance open positions through this bar ---------------------
+    for (name, _tf, fam, style, stop, rr, tk) in specs:
+        pos = positions.get(name)
+        if pos is None:
+            continue
+        reason, px, gross = update(pos, float(bar["h"]), float(bar["l"]),
+                                   C.MAX_HOLD_BARS)
+        if reason is None:
             store.upsert_position(pos.to_row())
-            log.info("OPEN  %s %s @%.2f (signal %.2f) stop %.2f size %.0f",
-                     name, "LONG" if d > 0 else "SHORT", fill,
-                     float(bar["c"]), pos.stop_px, pos.size)
-            notify.send(notify.fmt_open(
-                name, d, fill, float(bar["c"]), pos.stop_px, pos.size,
-                equity), log)
+            continue
 
+        net = gross - C.COST
+        pnl = net * pos.size
+        equity += pnl
+        slip = ((pos.entry_price - pos.signal_price) / pos.signal_price
+                * 10000 * pos.direction)
+        store.record_trade({
+            "strategy": name, "direction": pos.direction,
+            "entry_time": pos.entry_time, "exit_time": bar_time,
+            "signal_price": pos.signal_price, "entry_price": pos.entry_price,
+            "exit_price": float(px), "slippage_bp": float(slip),
+            "bars_late": int(pos.bars_late), "bars_held": pos.bars_held,
+            "exit_reason": reason, "gross_ret": float(gross),
+            "net_ret": float(net), "pnl": float(pnl),
+            "equity_after": float(equity),
+        })
+        store.delete_position(name)
+        positions.pop(name, None)
+        closed_this_bar.add(name)
+        log.info("CLOSE %s %s @%.2f  %s  net %+.3f%%  pnl %+.2f  eq %.2f",
+                 name, "LONG" if pos.direction > 0 else "SHORT", px,
+                 reason, net * 100, pnl, equity)
+        notify.send(notify.fmt_close(
+            name, pos.direction, pos.entry_price, float(px), reason,
+            net, pnl, equity, pos.bars_held), log)
+
+    # ---- 2. look for new entries on this bar ----------------------------
+    for (name, _tf, fam, style, stop, rr, tk) in specs:
+        if name in positions or name in closed_this_bar:
+            continue
+        s = sigs.get(fam)
+        if s is None or idx is None or idx >= len(s):
+            continue
+        d = int(s.iloc[idx])
+        if d == 0:
+            continue
+
+        # Entries are filled at the CURRENT price, never at the historical
+        # bar close — we could not have got that price if we are late. The
+        # lateness is recorded on the trade rather than the signal being
+        # dropped, so its real cost can be measured later instead of the
+        # run quietly under-trading versus the backtest.
+        fill = fill_now or float(bar["c"])
+        pos = open_position(name, d, bar_time, float(bar["c"]), fill,
+                            equity, C.RISK_PCT, stop, rr, tk, style)
+        pos.bars_late = int(bars_late)
+        positions[name] = pos
+        store.upsert_position(pos.to_row())
+        log.info("OPEN  %s %s @%.2f (signal %.2f, %d late) stop %.2f size %.0f",
+                 name, "LONG" if d > 0 else "SHORT", fill,
+                 float(bar["c"]), bars_late, pos.stop_px, pos.size)
+        notify.send(notify.fmt_open(
+            name, d, fill, float(bar["c"]), pos.stop_px, pos.size,
+            equity, bars_late), log)
 
 def print_status(store: Store):
     eq = store.equity(C.START_EQUITY)

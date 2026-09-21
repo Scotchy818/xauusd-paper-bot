@@ -38,6 +38,13 @@ jobs:
         # quietly trade with a changed engine.
         run: python -m paper_live.verify_parity
 
+      - name: Adverse-condition tests
+        # Checks the failure modes this deployment actually has: a late
+        # scheduler delivering bars in batches, restarts mid-position,
+        # duplicate cycles, and feed outages. The parity test above replays a
+        # punctual, contiguous stream and cannot catch any of them.
+        run: python -m paper_live.test_adverse
+
       - name: Run one trading cycle
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}

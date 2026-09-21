@@ -86,6 +86,32 @@ def latest_closed(df: pd.DataFrame, tf: str) -> pd.Series | None:
     return last
 
 
+def closed_since(df: pd.DataFrame, tf: str, last_seen: str | None) -> list:
+    """
+    Every bar that has CLOSED since `last_seen`, oldest first.
+
+    Processing only the newest bar silently drops the ones in between. That
+    loses entry signals, but much worse, it means open positions never see
+    the skipped bars' highs and lows — so a stop that should have triggered
+    two bars ago goes unhonoured and the position keeps running against
+    later, unrelated prices. Any scheduler delay longer than one bar
+    corrupts the run.
+
+    Returns a list of bar rows, so the caller can replay them in order.
+    """
+    if df is None or df.empty:
+        return []
+    minutes = INTERVALS[tf][1]
+    now = pd.Timestamp(datetime.now(timezone.utc)).tz_localize(None)
+
+    closed = df[pd.to_datetime(df["dt"]) + pd.Timedelta(minutes=minutes) <= now]
+    if closed.empty:
+        return []
+    if last_seen:
+        closed = closed[pd.to_datetime(closed["dt"]) > pd.Timestamp(last_seen)]
+    return [closed.iloc[i] for i in range(len(closed))]
+
+
 def spot(symbol: str) -> float | None:
     """Current price, from the newest 1m bar. Used as the live fill price."""
     try:

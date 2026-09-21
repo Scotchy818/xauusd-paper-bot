@@ -45,6 +45,7 @@ class Position:
     half_banked: int
     banked_ret: float
     bars_held: int
+    bars_late: int
     stop_pct: float
     trail_k: float
     style: str
@@ -75,7 +76,7 @@ def open_position(name, direction, bar_time, signal_price, fill_price,
         target_px=float(target_px) if target_px else None,
         best_px=float(fill_price), moved_be=0,
         armed_trail=1 if style == "trail_pct" else 0,
-        half_banked=0, banked_ret=0.0, bars_held=0,
+        half_banked=0, banked_ret=0.0, bars_held=0, bars_late=0,
         stop_pct=float(stop_pct), trail_k=float(trail_k), style=style,
     )
 
