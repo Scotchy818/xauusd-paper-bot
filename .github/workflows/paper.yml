@@ -1,26 +1,45 @@
 name: paper-trade
 
+# ARCHITECTURE NOTE
+#
+# The obvious design — a short job on a */15 cron — depends entirely on
+# GitHub's scheduler, which is documented as best-effort and in practice runs
+# 15-40 minutes late, skips slots under load, and took over an hour to fire
+# at all on this repo when it was new. For 15m strategies that is the
+# difference between trading a signal and missing it.
+#
+# So instead each job POLLS INTERNALLY every 60 seconds for ~5h50m (just under
+# the 6h runner limit). Within a job the timing is exact and owes nothing to
+# the scheduler. Cron only has to start a job roughly every 6 hours, and even
+# a 30-minute delay there costs one gap instead of degrading every single bar.
+#
+# The bot replays any bars missed during a gap (see feed.closed_since), so a
+# late start is caught up correctly rather than silently skipped.
+#
+# State is committed from inside the job whenever a trade closes and at least
+# every 15 minutes, so a killed runner loses minutes, not hours.
+
 on:
   schedule:
-    # Every 15 minutes. GitHub's scheduler can run late under load (commonly
-    # 5-20 min), so a bar is sometimes acted on later than ideal. Each trade
-    # records signal price vs actual fill, so that cost is measured, not hidden.
-    - cron: "*/15 * * * *"
-  workflow_dispatch:        # lets you trigger a run by hand
+    - cron: "5 */6 * * *"     # 00:05, 06:05, 12:05, 18:05 UTC
+  workflow_dispatch:
+    inputs:
+      minutes:
+        description: "How long this run should poll for (minutes)"
+        required: false
+        default: "350"
 
-# Runs must not overlap: two cycles writing paper.db at once would corrupt
-# state or double-open positions. Queue them instead of running in parallel.
 concurrency:
   group: paper-trade
-  cancel-in-progress: false
+  cancel-in-progress: false   # queue, never run two writers at once
 
 permissions:
-  contents: write           # needed to commit the trade log back
+  contents: write
 
 jobs:
-  cycle:
+  trade:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 355
     steps:
       - uses: actions/checkout@v4
 
@@ -33,39 +52,42 @@ jobs:
         run: pip install -r requirements.txt
 
       - name: Verify engine still matches the backtest
-        # If the live engine ever stops reproducing the validated backtest,
-        # the paper results stop meaning anything. Fail the run rather than
-        # quietly trade with a changed engine.
+        # If the live engine stops reproducing the validated backtest, the
+        # paper results stop meaning anything. Fail rather than trade.
         run: python -m paper_live.verify_parity
 
       - name: Adverse-condition tests
-        # Checks the failure modes this deployment actually has: a late
-        # scheduler delivering bars in batches, restarts mid-position,
-        # duplicate cycles, and feed outages. The parity test above replays a
-        # punctual, contiguous stream and cannot catch any of them.
+        # The failure modes this deployment actually has: late batched bar
+        # delivery, restart mid-position, duplicate cycles, cold start, long
+        # outage, feed failure. The parity test replays a punctual contiguous
+        # stream and cannot catch any of them.
         run: python -m paper_live.test_adverse
 
-      - name: Run one trading cycle
+      - name: Trade
         env:
           TELEGRAM_BOT_TOKEN: ${{ secrets.TELEGRAM_BOT_TOKEN }}
           TELEGRAM_CHAT_ID: ${{ secrets.TELEGRAM_CHAT_ID }}
-        run: python -m paper_live.run --once
+          PAPER_GIT_SYNC: "1"
+        run: |
+          python -m paper_live.run \
+            --loop-minutes "${{ github.event.inputs.minutes || 350 }}"
 
-      - name: Commit updated state
+      - name: Final state commit
+        if: always()        # also run if the trade step was cancelled
         run: |
           git config user.name  "paper-bot"
           git config user.email "paper-bot@users.noreply.github.com"
           git add -f paper_live/paper.db paper_live/paper.log 2>/dev/null || true
           if git diff --cached --quiet; then
-            echo "no state change this cycle"
+            echo "no state change to commit"
             exit 0
           fi
-          git commit -m "state: $(date -u '+%Y-%m-%d %H:%M UTC')"
-          # Another queued run may have pushed while we worked.
+          git commit -m "state: $(date -u '+%Y-%m-%d %H:%M UTC') (final)"
           for i in 1 2 3; do
-            git pull --rebase --autostash origin main && git push origin HEAD:main && exit 0
+            git pull --rebase --autostash origin main \
+              && git push origin HEAD:main && exit 0
             echo "push attempt $i failed, retrying"
             sleep 5
           done
-          echo "could not push state after 3 attempts" >&2
+          echo "could not push final state" >&2
           exit 1

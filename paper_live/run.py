@@ -27,6 +27,8 @@ from __future__ import annotations
 
 import argparse
 import logging
+import os
+import subprocess
 import sys
 import time
 from datetime import datetime, timezone
@@ -219,6 +221,40 @@ def process_bar(store, tf, bar, specs, sigs, idx, bars_late, log,
             name, d, fill, float(bar["c"]), pos.stop_px, pos.size,
             equity, bars_late), log)
 
+def git_sync(log) -> None:
+    """
+    Commit state from inside a long-running job.
+
+    A job that loops for hours would otherwise lose every trade if the runner
+    were killed, since the workflow only commits after the process exits.
+    Enabled by PAPER_GIT_SYNC=1 so local runs never touch git.
+    """
+    if os.environ.get("PAPER_GIT_SYNC") != "1":
+        return
+    try:
+        subprocess.run(["git", "add", "-f", C.DB_PATH, C.LOG_PATH],
+                       check=False, capture_output=True)
+        if subprocess.run(["git", "diff", "--cached", "--quiet"]).returncode == 0:
+            return                                  # nothing changed
+        subprocess.run(
+            ["git", "-c", "user.name=paper-bot",
+             "-c", "user.email=paper-bot@users.noreply.github.com",
+             "commit", "-q", "-m",
+             f"state: {datetime.now(timezone.utc):%Y-%m-%d %H:%M UTC}"],
+            check=False, capture_output=True)
+        for _ in range(3):
+            pull = subprocess.run(["git", "pull", "--rebase", "--autostash",
+                                   "origin", "main"], capture_output=True)
+            push = subprocess.run(["git", "push", "-q", "origin", "HEAD:main"],
+                                  capture_output=True)
+            if pull.returncode == 0 and push.returncode == 0:
+                return
+            time.sleep(5)
+        log.warning("git sync failed after 3 attempts")
+    except Exception as e:
+        log.warning("git sync error: %s", e)       # never kill the loop
+
+
 def print_status(store: Store):
     eq = store.equity(C.START_EQUITY)
     n = store.trade_count()
@@ -246,6 +282,10 @@ def print_status(store: Store):
 def main():
     ap = argparse.ArgumentParser()
     ap.add_argument("--once", action="store_true", help="one cycle then exit")
+    ap.add_argument("--loop-minutes", type=float, default=None,
+                    help="poll continuously for N minutes then exit cleanly "
+                         "(used by CI so one job covers hours of real-time "
+                         "polling instead of relying on the cron scheduler)")
     ap.add_argument("--status", action="store_true", help="print state and exit")
     args = ap.parse_args()
 
@@ -273,14 +313,33 @@ def main():
         print_status(store)
         return
 
+    deadline = (time.time() + args.loop_minutes * 60) if args.loop_minutes else None
+    if deadline:
+        log.info("looping for %.0f min, polling every %ds",
+                 args.loop_minutes, C.POLL_SECONDS)
+    last_trades = store.trade_count()
+    last_sync = time.time()
+
     while True:
         try:
             cycle(store, state)
+            # Persist promptly when something happened, and periodically
+            # regardless so bar-position metadata is not lost on a kill.
+            n = store.trade_count()
+            if n != last_trades or time.time() - last_sync > 900:
+                git_sync(log)
+                last_trades = n
+                last_sync = time.time()
         except KeyboardInterrupt:
             log.info("stopped by user")
             break
         except Exception as e:                  # never die on a transient error
             log.exception("cycle error: %s", e)
+
+        if deadline and time.time() >= deadline:
+            log.info("loop window finished — exiting cleanly")
+            git_sync(log)
+            break
         time.sleep(C.POLL_SECONDS)
 
 
