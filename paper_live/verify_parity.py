@@ -40,7 +40,12 @@ def replay(df, sig, stop, rr, tk, style, max_walk):
     out = []
     pos = None
     closed_bar = -1
-    for i in range(n - 1):
+    # Exits are checked on EVERY bar including the last. The backtest's inner
+    # loop runs to n-1, so a trade resolving on the final bar is counted there;
+    # stopping this loop at n-1 missed it and made the gate fail intermittently
+    # depending on where the fetched data happened to end. Entries still stop
+    # one bar short, matching the backtest's `idx[idx < n-1]`.
+    for i in range(n):
         if pos is not None:
             reason, px, gross = update(pos, h[i], l[i], max_walk)
             if reason is not None:
@@ -48,7 +53,7 @@ def replay(df, sig, stop, rr, tk, style, max_walk):
                 pos = None
                 closed_bar = i
         # no re-entry on the bar a position just exited (matches backtest)
-        if pos is None and s[i] != 0 and i > closed_bar:
+        if pos is None and i < n - 1 and s[i] != 0 and i > closed_bar:
             pos = open_position("t", int(s[i]), str(i), c[i], c[i],
                                 1.0, 0.02, stop, rr, tk, style)
     return out

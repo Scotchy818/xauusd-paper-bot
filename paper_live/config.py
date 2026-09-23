@@ -75,6 +75,15 @@ SETTLE_SECONDS = 30
 # minutes doing a network call per entry.
 MAX_CATCHUP_BARS = 50
 
+# A missed bar is always replayed for EXITS — an open position must see every
+# high and low or its stop goes unhonoured. But opening a NEW position on a
+# badly stale signal is not the strategy being tested: the first live run
+# entered trades 37 and 38 bars late (over 9 hours on a 15m chart) while the
+# parity gate was failing and blocking jobs. Entries more than this many bars
+# late are skipped and counted, so the cost shows up as a number rather than
+# as trades that were never really available.
+MAX_ENTRY_BARS_LATE = 3
+
 # Bars of history kept for signal computation. Must comfortably exceed the
 # longest lookback any strategy uses (premium/discount uses 100).
 HISTORY_BARS = 1000
@@ -86,15 +95,40 @@ MAX_HOLD_BARS = 1000
 
 
 # (name, timeframe, strategy_family, exit_style, stop_pct, rr, trail_k)
+#
+# EXIT CHANGE 2026-09-23 — every strategy moved to a wide pure trailing stop.
+#
+# The previous exit (be_then_trail, trail_k=0.5) moved the stop to breakeven at
+# +1R then trailed only 0.175% behind the high, so any small pullback closed
+# the trade. Winners were structurally capped near 1R while losers paid a full
+# 1R: the live account realised 0.78:1 over its first 23 trades, with the
+# largest win being +1.12R. That is a coin-flip win rate with no upside.
+#
+# trail_pct with trail_k=3.0 trails 3x the stop distance (1.05% on a 0.35%
+# stop). The initial stop holds until price has run roughly +2R, after which
+# the trail takes over and the trade can run as far as the move goes.
+#
+# Validated three ways before shipping (exit_rr_validate.py):
+#   - realised R:R 3.46 vs 1.10, expectancy +0.152R vs +0.062R
+#   - positive in BOTH halves of history (+0.110R, +0.177R)
+#   - better on 8 of 8 strategies, not one outlier
+#   - expectancy rises monotonically with trail width (t up to 5.7), which is
+#     a mechanism - gold trends, so cutting winners at 1R discards the reason
+#     for trading it - rather than a single curve-fit setting
+#
+# Trade-off accepted: win rate drops from ~51% to ~26%, so losing streaks get
+# longer, and a trade can run to +1.9R and still come back to a full stop
+# because there is no breakeven protection. That is the cost of letting
+# winners run, and it is what the expectancy numbers already account for.
 STRATEGIES = [
-    ("donchian20_1h",  "1h",  "donchian20", "be_then_trail", 0.0035, 0.0, 0.5),
-    ("orb24_1h",       "1h",  "orb24",      "be_then_trail", 0.0035, 0.0, 0.5),
-    ("orb12_1h",       "1h",  "orb12",      "be_then_trail", 0.0035, 0.0, 0.5),
-    ("macd_1h_run",    "1h",  "macd",       "runner",        0.0050, 3.0, 1.0),
-    ("ema1226_1h",     "1h",  "ema_12_26",  "be_then_trail", 0.0035, 0.0, 0.5),
-    ("bbbreak_15m",    "15m", "bb_breakout", "be_then_trail", 0.0035, 0.0, 0.5),
-    ("donchian50_15m", "15m", "donchian50", "runner",        0.0035, 3.0, 0.5),
-    ("keltner_15m",    "15m", "keltner",    "runner",        0.0050, 2.0, 0.5),
+    ("donchian20_1h",  "1h",  "donchian20",  "trail_pct", 0.0035, 0.0, 3.0),
+    ("orb24_1h",       "1h",  "orb24",       "trail_pct", 0.0035, 0.0, 3.0),
+    ("orb12_1h",       "1h",  "orb12",       "trail_pct", 0.0035, 0.0, 3.0),
+    ("macd_1h",        "1h",  "macd",        "trail_pct", 0.0050, 0.0, 3.0),
+    ("ema1226_1h",     "1h",  "ema_12_26",   "trail_pct", 0.0035, 0.0, 3.0),
+    ("bbbreak_15m",    "15m", "bb_breakout", "trail_pct", 0.0035, 0.0, 3.0),
+    ("donchian50_15m", "15m", "donchian50",  "trail_pct", 0.0035, 0.0, 3.0),
+    ("keltner_15m",    "15m", "keltner",     "trail_pct", 0.0050, 0.0, 3.0),
 ]
 
 DB_PATH = "paper_live/paper.db"

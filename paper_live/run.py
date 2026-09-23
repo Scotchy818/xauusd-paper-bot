@@ -202,6 +202,13 @@ def process_bar(store, tf, bar, specs, sigs, idx, bars_late, log,
         d = int(s.iloc[idx])
         if d == 0:
             continue
+        if bars_late > C.MAX_ENTRY_BARS_LATE:
+            # Replay still managed exits above; only the new entry is skipped.
+            store.set_meta("skipped_stale_entries",
+                           int(store.get_meta("skipped_stale_entries", 0) or 0) + 1)
+            log.info("SKIP  %s entry — signal %d bars late (cap %d)",
+                     name, bars_late, C.MAX_ENTRY_BARS_LATE)
+            continue
 
         # Entries are filled at the CURRENT price, never at the historical
         # bar close — we could not have got that price if we are late. The

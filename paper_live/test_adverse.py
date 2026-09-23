@@ -96,10 +96,22 @@ def _run_bars(store, df, sigs, specs, bar_idxs, batch):
 
 
 def test_gap_replay(df, sigs, specs):
-    """Late batches must produce identical trades to punctual delivery."""
+    """
+    Delivery delay must not change the outcome — WITHIN the staleness cap.
+
+    Batch sizes here stay at or below MAX_ENTRY_BARS_LATE + 1, so every entry
+    is still inside the freshness window and results must be byte-identical.
+
+    Beyond the cap the runs legitimately DIVERGE, because entries on badly
+    stale signals are deliberately skipped (see test_stale_entry_skipped).
+    That is a real trade-off and not a bug: a long outage costs missed
+    entries rather than trades taken at prices that were never available.
+    Exits are replayed in every case regardless of lateness, which is the
+    property that actually protects open positions.
+    """
     idxs = list(range(len(df) - 600, len(df)))
     out = {}
-    for batch in (1, 2, 4, 8):
+    for batch in (1, 2, 3, C.MAX_ENTRY_BARS_LATE + 1):
         path = _tmpdb()
         st = Store(path)
         eq = _run_bars(st, df, sigs, specs, idxs, batch)
@@ -113,7 +125,7 @@ def test_gap_replay(df, sigs, specs):
     ok = all(out[b][0] == base[0] and out[b][1] == base[1] and out[b][2] == base[2]
              for b in out)
     detail = "  ".join(f"batch{b}:{out[b][0]}tr eq{out[b][1]:.2f}" for b in out)
-    results.append(("GAP REPLAY (late batches == punctual)",
+    results.append((f"GAP REPLAY (delay <= {C.MAX_ENTRY_BARS_LATE} bars == punctual)",
                     PASS if ok else FAIL, detail))
     return ok
 
@@ -240,6 +252,43 @@ def test_settle_delay():
     return ok
 
 
+def test_stale_entry_skipped():
+    """A badly-late bar must still manage exits but must not open new trades."""
+    df = feed.fetch_recent(C.SYMBOL, "1h", 400)
+    specs = [s for s in C.STRATEGIES if s[1] == "1h"]
+    sigs = {}
+    for (_n, _t, fam, _s, _st, _r, _k) in specs:
+        if fam not in sigs:
+            sigs[fam] = STRATEGIES[fam](df).fillna(0).astype(int)
+    # find a bar where at least one strategy signals
+    idx = None
+    for i in range(len(df) - 50, len(df) - 1):
+        if any(int(sigs[f].iloc[i]) != 0 for f in sigs):
+            idx = i
+            break
+    if idx is None:
+        results.append(("STALE ENTRY (late signal not opened)", FAIL,
+                        "no signal found to test with"))
+        return False
+    path = _tmpdb(); st = Store(path)
+    _SPOT["px"] = float(df.iloc[idx]["c"])
+    RUN.process_bar(st, "1h", df.iloc[idx], specs, sigs, idx,
+                    C.MAX_ENTRY_BARS_LATE + 5, _quiet)     # very late
+    n_late = len(st.open_positions())
+    st.db.close(); os.remove(path)
+
+    path = _tmpdb(); st = Store(path)
+    RUN.process_bar(st, "1h", df.iloc[idx], specs, sigs, idx, 0, _quiet)  # fresh
+    n_fresh = len(st.open_positions())
+    st.db.close(); os.remove(path)
+
+    ok = n_late == 0 and n_fresh > 0
+    results.append(("STALE ENTRY (late signal not opened)",
+                    PASS if ok else FAIL,
+                    f"fresh opened {n_fresh}, stale opened {n_late} (want >0 and 0)"))
+    return ok
+
+
 def test_feed_outage():
     """closed_since must return nothing (not crash, not skip) on bad input."""
     ok = True
@@ -270,6 +319,7 @@ def main() -> int:
     test_cold_start()
     test_catchup_cap()
     test_settle_delay()
+    test_stale_entry_skipped()
     test_feed_outage()
 
     print("=" * 84)
