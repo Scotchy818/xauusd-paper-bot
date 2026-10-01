@@ -19119,3 +19119,4 @@
 2026-10-01 04:01:07,549 INFO current timestamp :2026-10-01T04:00:00
 2026-10-01 04:01:07,911 INFO new 15m bar 2026-10-01 03:45:00  o=4169.40 h=4176.84 l=4168.76 c=4175.02
 2026-10-01 04:01:07,913 INFO OPEN  keltner_15m LONG @4175.24 (signal 4175.02, 0 late) stop 4154.37 size 20319
+2026-10-01 04:01:09,894 INFO loop window finished — exiting cleanly
