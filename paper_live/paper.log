@@ -40733,3 +40733,157 @@
 2026-10-08 04:51:36,966 INFO End Date :2026-10-08T04:51:36.966667+00:00
 2026-10-08 04:51:37,783 INFO current timestamp :2026-10-08T04:30:00
 2026-10-08 04:51:38,295 INFO loop window finished — exiting cleanly
+2026-10-13 14:04:22,579 INFO Start Date :2026-04-13T06:04:22.579766+00:00
+2026-10-13 14:04:22,579 INFO End Date :2026-10-13T14:04:22.579766+00:00
+2026-10-13 14:04:23,291 INFO current timestamp :2026-10-13T13:00:00
+2026-10-13 14:04:35,182 INFO Start Date :2026-09-16T02:04:35.182412+00:00
+2026-10-13 14:04:35,182 INFO End Date :2026-10-13T14:04:35.182412+00:00
+2026-10-13 14:04:35,731 INFO current timestamp :2026-10-13T13:00:00
+2026-10-13 14:04:36,143 INFO Start Date :2026-07-13T22:04:36.143380+00:00
+2026-10-13 14:04:36,143 INFO End Date :2026-10-13T14:04:36.143380+00:00
+2026-10-13 14:04:36,700 INFO current timestamp :2026-10-13T13:00:00
+2026-10-13 14:04:37,166 INFO cold start on 1h — adopting bar 2026-10-13 13:00:00, not replaying 999 bars
+2026-10-13 14:04:37,168 INFO Start Date :2026-08-28T18:04:37.168119+00:00
+2026-10-13 14:04:37,168 INFO End Date :2026-10-13T14:04:37.168119+00:00
+2026-10-13 14:04:37,671 INFO current timestamp :2026-10-13T13:00:00
+2026-10-13 14:04:38,157 INFO Start Date :2026-09-06T22:04:38.157878+00:00
+2026-10-13 14:04:38,158 INFO End Date :2026-10-13T14:04:38.157878+00:00
+2026-10-13 14:04:38,689 INFO current timestamp :2026-10-13T13:00:00
+2026-10-13 14:04:39,486 INFO paper trader starting — XAUUSD, 8 strategies, equity 7232.37
+2026-10-13 14:04:40,047 INFO looping for 350 min, polling every 60s
+2026-10-13 14:04:40,048 INFO Start Date :2026-07-13T22:04:40.048233+00:00
+2026-10-13 14:04:40,048 INFO End Date :2026-10-13T14:04:40.048233+00:00
+2026-10-13 14:04:41,249 INFO current timestamp :2026-10-13T13:00:00
+2026-10-13 14:04:41,723 WARNING 1h is 79 bars behind; replaying only the last 50 (long outage or lost state)
+2026-10-13 14:04:41,723 INFO catching up 50 1h bars — scheduler ran late
+2026-10-13 14:04:41,723 INFO Start Date :2026-10-13T13:53:41.723701+00:00
+2026-10-13 14:04:41,723 INFO End Date :2026-10-13T14:04:41.723701+00:00
+2026-10-13 14:04:42,158 INFO current timestamp :2026-10-13T14:03:00
+2026-10-13 14:04:42,599 INFO replay 1h bar 2026-10-09 10:00:00 (49 bars late)  h=4186.60 l=4179.06
+2026-10-13 14:04:42,603 INFO replay 1h bar 2026-10-09 11:00:00 (48 bars late)  h=4186.28 l=4174.97
+2026-10-13 14:04:42,606 INFO replay 1h bar 2026-10-09 12:00:00 (47 bars late)  h=4191.32 l=4168.28
+2026-10-13 14:04:42,608 INFO replay 1h bar 2026-10-09 13:00:00 (46 bars late)  h=4196.28 l=4174.01
+2026-10-13 14:04:42,611 INFO replay 1h bar 2026-10-09 14:00:00 (45 bars late)  h=4191.40 l=4181.18
+2026-10-13 14:04:42,634 INFO replay 1h bar 2026-10-09 15:00:00 (44 bars late)  h=4192.31 l=4180.66
+2026-10-13 14:04:42,637 INFO replay 1h bar 2026-10-09 16:00:00 (43 bars late)  h=4193.48 l=4184.98
+2026-10-13 14:04:42,639 INFO replay 1h bar 2026-10-09 17:00:00 (42 bars late)  h=4197.36 l=4187.02
+2026-10-13 14:04:42,648 INFO replay 1h bar 2026-10-09 18:00:00 (41 bars late)  h=4201.97 l=4192.30
+2026-10-13 14:04:42,651 INFO replay 1h bar 2026-10-09 19:00:00 (40 bars late)  h=4200.85 l=4192.59
+2026-10-13 14:04:42,654 INFO replay 1h bar 2026-10-09 20:00:00 (39 bars late)  h=4197.06 l=4189.81
+2026-10-13 14:04:42,657 INFO replay 1h bar 2026-10-11 22:00:00 (38 bars late)  h=4195.27 l=4183.59
+2026-10-13 14:04:42,661 INFO replay 1h bar 2026-10-11 23:00:00 (37 bars late)  h=4199.14 l=4183.48
+2026-10-13 14:04:42,664 INFO replay 1h bar 2026-10-12 00:00:00 (36 bars late)  h=4210.19 l=4187.11
+2026-10-13 14:04:42,666 INFO SKIP  donchian20_1h entry — signal 36 bars late (cap 3)
+2026-10-13 14:04:42,667 INFO SKIP  orb24_1h entry — signal 36 bars late (cap 3)
+2026-10-13 14:04:42,669 INFO replay 1h bar 2026-10-12 01:00:00 (35 bars late)  h=4216.89 l=4200.02
+2026-10-13 14:04:42,671 INFO SKIP  donchian20_1h entry — signal 35 bars late (cap 3)
+2026-10-13 14:04:42,672 INFO SKIP  orb24_1h entry — signal 35 bars late (cap 3)
+2026-10-13 14:04:42,674 INFO replay 1h bar 2026-10-12 02:00:00 (34 bars late)  h=4214.18 l=4203.02
+2026-10-13 14:04:42,676 INFO replay 1h bar 2026-10-12 03:00:00 (33 bars late)  h=4207.94 l=4201.23
+2026-10-13 14:04:42,679 INFO replay 1h bar 2026-10-12 04:00:00 (32 bars late)  h=4204.01 l=4193.40
+2026-10-13 14:04:42,682 INFO replay 1h bar 2026-10-12 05:00:00 (31 bars late)  h=4195.74 l=4179.07
+2026-10-13 14:04:42,685 INFO replay 1h bar 2026-10-12 06:00:00 (30 bars late)  h=4192.70 l=4181.14
+2026-10-13 14:04:42,688 INFO replay 1h bar 2026-10-12 07:00:00 (29 bars late)  h=4188.01 l=4179.39
+2026-10-13 14:04:42,691 INFO replay 1h bar 2026-10-12 08:00:00 (28 bars late)  h=4181.35 l=4172.72
+2026-10-13 14:04:42,693 INFO replay 1h bar 2026-10-12 09:00:00 (27 bars late)  h=4178.39 l=4168.56
+2026-10-13 14:04:42,695 INFO CLOSE orb12_1h LONG @4172.61  trail  net +0.945%  pnl +195.18  eq 7427.55
+2026-10-13 14:04:43,250 INFO replay 1h bar 2026-10-12 10:00:00 (26 bars late)  h=4179.94 l=4171.95
+2026-10-13 14:04:43,252 INFO replay 1h bar 2026-10-12 11:00:00 (25 bars late)  h=4177.22 l=4167.15
+2026-10-13 14:04:43,254 INFO SKIP  donchian20_1h entry — signal 25 bars late (cap 3)
+2026-10-13 14:04:43,255 INFO SKIP  orb24_1h entry — signal 25 bars late (cap 3)
+2026-10-13 14:04:43,256 INFO SKIP  orb12_1h entry — signal 25 bars late (cap 3)
+2026-10-13 14:04:43,257 INFO replay 1h bar 2026-10-12 12:00:00 (24 bars late)  h=4172.98 l=4154.44
+2026-10-13 14:04:43,259 INFO SKIP  donchian20_1h entry — signal 24 bars late (cap 3)
+2026-10-13 14:04:43,259 INFO SKIP  orb24_1h entry — signal 24 bars late (cap 3)
+2026-10-13 14:04:43,260 INFO SKIP  orb12_1h entry — signal 24 bars late (cap 3)
+2026-10-13 14:04:43,261 INFO SKIP  ema1226_1h entry — signal 24 bars late (cap 3)
+2026-10-13 14:04:43,262 INFO replay 1h bar 2026-10-12 13:00:00 (23 bars late)  h=4175.35 l=4162.77
+2026-10-13 14:04:43,264 INFO replay 1h bar 2026-10-12 14:00:00 (22 bars late)  h=4175.06 l=4158.60
+2026-10-13 14:04:43,266 INFO replay 1h bar 2026-10-12 15:00:00 (21 bars late)  h=4170.73 l=4162.90
+2026-10-13 14:04:43,268 INFO replay 1h bar 2026-10-12 16:00:00 (20 bars late)  h=4166.27 l=4159.84
+2026-10-13 14:04:43,270 INFO replay 1h bar 2026-10-12 17:00:00 (19 bars late)  h=4170.59 l=4164.06
+2026-10-13 14:04:43,271 INFO replay 1h bar 2026-10-12 18:00:00 (18 bars late)  h=4172.66 l=4166.28
+2026-10-13 14:04:43,273 INFO replay 1h bar 2026-10-12 19:00:00 (17 bars late)  h=4169.51 l=4163.18
+2026-10-13 14:04:43,275 INFO replay 1h bar 2026-10-12 20:00:00 (16 bars late)  h=4171.61 l=4167.20
+2026-10-13 14:04:43,277 INFO replay 1h bar 2026-10-12 22:00:00 (15 bars late)  h=4176.18 l=4168.52
+2026-10-13 14:04:43,279 INFO replay 1h bar 2026-10-12 23:00:00 (14 bars late)  h=4175.81 l=4166.39
+2026-10-13 14:04:43,281 INFO replay 1h bar 2026-10-13 00:00:00 (13 bars late)  h=4171.39 l=4153.31
+2026-10-13 14:04:43,283 INFO CLOSE macd_1h LONG @4153.63  trail  net +1.121%  pnl +157.34  eq 7584.89
+2026-10-13 14:04:43,875 INFO replay 1h bar 2026-10-13 01:00:00 (12 bars late)  h=4169.69 l=4150.53
+2026-10-13 14:04:43,876 INFO replay 1h bar 2026-10-13 02:00:00 (11 bars late)  h=4180.70 l=4163.48
+2026-10-13 14:04:43,877 INFO SKIP  orb12_1h entry — signal 11 bars late (cap 3)
+2026-10-13 14:04:43,878 INFO SKIP  macd_1h entry — signal 11 bars late (cap 3)
+2026-10-13 14:04:43,880 INFO replay 1h bar 2026-10-13 03:00:00 (10 bars late)  h=4189.15 l=4175.53
+2026-10-13 14:04:43,881 INFO SKIP  orb12_1h entry — signal 10 bars late (cap 3)
+2026-10-13 14:04:43,882 INFO replay 1h bar 2026-10-13 04:00:00 (9 bars late)  h=4196.16 l=4187.11
+2026-10-13 14:04:43,883 INFO SKIP  donchian20_1h entry — signal 9 bars late (cap 3)
+2026-10-13 14:04:43,884 INFO SKIP  orb12_1h entry — signal 9 bars late (cap 3)
+2026-10-13 14:04:43,884 INFO SKIP  ema1226_1h entry — signal 9 bars late (cap 3)
+2026-10-13 14:04:43,885 INFO replay 1h bar 2026-10-13 05:00:00 (8 bars late)  h=4200.23 l=4189.09
+2026-10-13 14:04:43,886 INFO replay 1h bar 2026-10-13 06:00:00 (7 bars late)  h=4193.76 l=4183.77
+2026-10-13 14:04:43,887 INFO replay 1h bar 2026-10-13 07:00:00 (6 bars late)  h=4193.62 l=4183.27
+2026-10-13 14:04:43,888 INFO replay 1h bar 2026-10-13 08:00:00 (5 bars late)  h=4193.51 l=4184.38
+2026-10-13 14:04:43,889 INFO replay 1h bar 2026-10-13 09:00:00 (4 bars late)  h=4188.84 l=4180.65
+2026-10-13 14:04:43,890 INFO replay 1h bar 2026-10-13 10:00:00 (3 bars late)  h=4189.02 l=4179.52
+2026-10-13 14:04:43,891 INFO replay 1h bar 2026-10-13 11:00:00 (2 bars late)  h=4188.80 l=4179.65
+2026-10-13 14:04:43,893 INFO replay 1h bar 2026-10-13 12:00:00 (1 bars late)  h=4190.56 l=4177.31
+2026-10-13 14:04:43,894 INFO new 1h bar 2026-10-13 13:00:00  o=4179.52 h=4189.48 l=4168.48 c=4168.91
+2026-10-13 14:04:43,895 INFO OPEN  macd_1h SHORT @4166.27 (signal 4168.91, 0 late) stop 4187.11 size 15170
+2026-10-13 14:04:44,457 INFO Start Date :2026-09-20T16:04:44.457421+00:00
+2026-10-13 14:04:44,457 INFO End Date :2026-10-13T14:04:44.457421+00:00
+2026-10-13 14:04:45,268 INFO current timestamp :2026-10-13T13:45:00
+2026-10-13 14:04:45,756 WARNING 15m is 313 bars behind; replaying only the last 50 (long outage or lost state)
+2026-10-13 14:04:45,757 INFO catching up 50 15m bars — scheduler ran late
+2026-10-13 14:04:45,757 INFO Start Date :2026-10-13T13:53:45.757313+00:00
+2026-10-13 14:04:45,757 INFO End Date :2026-10-13T14:04:45.757313+00:00
+2026-10-13 14:04:46,172 INFO current timestamp :2026-10-13T14:03:00
+2026-10-13 14:04:46,587 INFO replay 15m bar 2026-10-13 01:30:00 (49 bars late)  h=4159.05 l=4152.05
+2026-10-13 14:04:46,591 INFO replay 15m bar 2026-10-13 01:45:00 (48 bars late)  h=4167.31 l=4150.53
+2026-10-13 14:04:46,594 INFO replay 15m bar 2026-10-13 02:00:00 (47 bars late)  h=4169.39 l=4163.48
+2026-10-13 14:04:46,597 INFO replay 15m bar 2026-10-13 02:15:00 (46 bars late)  h=4173.84 l=4166.20
+2026-10-13 14:04:46,601 INFO replay 15m bar 2026-10-13 02:30:00 (45 bars late)  h=4175.40 l=4166.77
+2026-10-13 14:04:46,604 INFO replay 15m bar 2026-10-13 02:45:00 (44 bars late)  h=4180.70 l=4170.62
+2026-10-13 14:04:46,608 INFO replay 15m bar 2026-10-13 03:00:00 (43 bars late)  h=4180.41 l=4175.65
+2026-10-13 14:04:46,611 INFO replay 15m bar 2026-10-13 03:15:00 (42 bars late)  h=4182.90 l=4175.53
+2026-10-13 14:04:46,614 INFO replay 15m bar 2026-10-13 03:30:00 (41 bars late)  h=4183.47 l=4177.85
+2026-10-13 14:04:46,617 INFO replay 15m bar 2026-10-13 03:45:00 (40 bars late)  h=4189.15 l=4182.31
+2026-10-13 14:04:46,620 INFO replay 15m bar 2026-10-13 04:00:00 (39 bars late)  h=4190.31 l=4187.11
+2026-10-13 14:04:46,624 INFO replay 15m bar 2026-10-13 04:15:00 (38 bars late)  h=4193.02 l=4189.15
+2026-10-13 14:04:46,627 INFO replay 15m bar 2026-10-13 04:30:00 (37 bars late)  h=4194.77 l=4190.36
+2026-10-13 14:04:46,630 INFO replay 15m bar 2026-10-13 04:45:00 (36 bars late)  h=4196.16 l=4193.03
+2026-10-13 14:04:46,633 INFO replay 15m bar 2026-10-13 05:00:00 (35 bars late)  h=4199.31 l=4195.22
+2026-10-13 14:04:46,637 INFO replay 15m bar 2026-10-13 05:15:00 (34 bars late)  h=4200.23 l=4193.73
+2026-10-13 14:04:46,640 INFO replay 15m bar 2026-10-13 05:30:00 (33 bars late)  h=4196.52 l=4189.65
+2026-10-13 14:04:46,643 INFO replay 15m bar 2026-10-13 05:45:00 (32 bars late)  h=4193.41 l=4189.09
+2026-10-13 14:04:46,647 INFO replay 15m bar 2026-10-13 06:00:00 (31 bars late)  h=4193.76 l=4190.23
+2026-10-13 14:04:46,650 INFO replay 15m bar 2026-10-13 06:15:00 (30 bars late)  h=4191.10 l=4183.95
+2026-10-13 14:04:46,653 INFO replay 15m bar 2026-10-13 06:30:00 (29 bars late)  h=4187.27 l=4183.77
+2026-10-13 14:04:46,662 INFO replay 15m bar 2026-10-13 06:45:00 (28 bars late)  h=4191.81 l=4185.70
+2026-10-13 14:04:46,666 INFO replay 15m bar 2026-10-13 07:00:00 (27 bars late)  h=4193.61 l=4187.20
+2026-10-13 14:04:46,669 INFO replay 15m bar 2026-10-13 07:15:00 (26 bars late)  h=4193.62 l=4189.19
+2026-10-13 14:04:46,673 INFO replay 15m bar 2026-10-13 07:30:00 (25 bars late)  h=4191.55 l=4183.27
+2026-10-13 14:04:46,699 INFO replay 15m bar 2026-10-13 07:45:00 (24 bars late)  h=4190.40 l=4184.52
+2026-10-13 14:04:46,702 INFO replay 15m bar 2026-10-13 08:00:00 (23 bars late)  h=4190.52 l=4184.38
+2026-10-13 14:04:46,705 INFO replay 15m bar 2026-10-13 08:15:00 (22 bars late)  h=4193.23 l=4188.24
+2026-10-13 14:04:46,708 INFO replay 15m bar 2026-10-13 08:30:00 (21 bars late)  h=4193.51 l=4186.88
+2026-10-13 14:04:46,712 INFO replay 15m bar 2026-10-13 08:45:00 (20 bars late)  h=4189.57 l=4185.02
+2026-10-13 14:04:46,715 INFO replay 15m bar 2026-10-13 09:00:00 (19 bars late)  h=4188.84 l=4185.35
+2026-10-13 14:04:46,718 INFO replay 15m bar 2026-10-13 09:15:00 (18 bars late)  h=4186.85 l=4182.64
+2026-10-13 14:04:46,722 INFO replay 15m bar 2026-10-13 09:30:00 (17 bars late)  h=4185.20 l=4180.65
+2026-10-13 14:04:46,725 INFO replay 15m bar 2026-10-13 09:45:00 (16 bars late)  h=4187.82 l=4182.68
+2026-10-13 14:04:46,728 INFO replay 15m bar 2026-10-13 10:00:00 (15 bars late)  h=4189.02 l=4183.18
+2026-10-13 14:04:46,731 INFO replay 15m bar 2026-10-13 10:15:00 (14 bars late)  h=4184.36 l=4180.52
+2026-10-13 14:04:46,735 INFO replay 15m bar 2026-10-13 10:30:00 (13 bars late)  h=4183.80 l=4179.95
+2026-10-13 14:04:46,738 INFO replay 15m bar 2026-10-13 10:45:00 (12 bars late)  h=4181.53 l=4179.52
+2026-10-13 14:04:46,741 INFO replay 15m bar 2026-10-13 11:00:00 (11 bars late)  h=4186.88 l=4179.65
+2026-10-13 14:04:46,745 INFO replay 15m bar 2026-10-13 11:15:00 (10 bars late)  h=4186.05 l=4182.66
+2026-10-13 14:04:46,748 INFO replay 15m bar 2026-10-13 11:30:00 (9 bars late)  h=4187.12 l=4183.27
+2026-10-13 14:04:46,751 INFO replay 15m bar 2026-10-13 11:45:00 (8 bars late)  h=4188.80 l=4183.91
+2026-10-13 14:04:46,754 INFO replay 15m bar 2026-10-13 12:00:00 (7 bars late)  h=4189.59 l=4183.98
+2026-10-13 14:04:46,758 INFO replay 15m bar 2026-10-13 12:15:00 (6 bars late)  h=4187.06 l=4181.41
+2026-10-13 14:04:46,761 INFO replay 15m bar 2026-10-13 12:30:00 (5 bars late)  h=4190.56 l=4182.06
+2026-10-13 14:04:46,765 INFO replay 15m bar 2026-10-13 12:45:00 (4 bars late)  h=4185.14 l=4177.31
+2026-10-13 14:04:46,768 INFO replay 15m bar 2026-10-13 13:00:00 (3 bars late)  h=4182.52 l=4172.57
+2026-10-13 14:04:46,771 INFO replay 15m bar 2026-10-13 13:15:00 (2 bars late)  h=4188.73 l=4175.69
+2026-10-13 14:04:46,774 INFO replay 15m bar 2026-10-13 13:30:00 (1 bars late)  h=4189.48 l=4175.76
+2026-10-13 14:04:46,778 INFO new 15m bar 2026-10-13 13:45:00  o=4177.26 h=4179.52 l=4168.48 c=4168.91
